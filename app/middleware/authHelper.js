@@ -22,7 +22,7 @@ const authCheck = async (req, res, next) => {
   if (!token) {
     return res.status(403).send({
       status: "false",
-      message: "a token is required for auth",
+      message: "a token is required ",
     });
   }
   try {

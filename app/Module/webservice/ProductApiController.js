@@ -1,7 +1,7 @@
 const ProductModel = require("../Product/model/Product");
-const fs = require('fs');
+const fs = require("fs");
 const productRepository = require("../Product/Repository/productRepository");
-const path = require('path')
+const path = require("path");
 
 class ProductController {
   async getallProducts(req, res) {
@@ -11,7 +11,7 @@ class ProductController {
         message: "Products fetched successfully",
         status: 200,
         data: products,
-        total : products.length
+        total: products.length,
       });
     } catch (error) {
       console.log(error);
@@ -26,13 +26,13 @@ class ProductController {
         size: req.body.size,
         color: req.body.color,
       };
-         if (req.file) {
-           data.image = req.file.path;
-         }
+      if (req.file) {
+        data.image = req.file.path;
+      }
 
       const newProduct = await productRepository.save(data);
       res.status(201).json({
-        status:200,
+        status: 200,
         message: "Product created successfully",
         data: newProduct,
       });
@@ -44,7 +44,7 @@ class ProductController {
     try {
       const productId = req.params.id;
 
-      const singleProduct = await productRepository.findProduct( productId);
+      const singleProduct = await productRepository.findProduct(productId);
 
       res.status(200).json({
         status: 200,
@@ -65,9 +65,9 @@ class ProductController {
       }
       const { name, price, size, color } = req.body;
       const productData = { name, price, size, color };
-       if (new_image) {
-         productData.image = new_image;
-       }
+      if (new_image) {
+        productData.image = new_image;
+      }
 
       const newProduct = await productRepository.edit(productData, productId);
 
@@ -98,6 +98,64 @@ class ProductController {
       });
     } catch (error) {
       console.log(error);
+    }
+  }
+  //filter by size
+  async filterbySize(req, res) {
+    try {
+      const sizeParam = req.query.size;
+
+      const sizes = sizeParam
+        .split(",")
+        .map((size) => size.trim())
+        .filter((size) => size);
+
+      const query = {
+        size: { $in: sizes },
+      };
+
+      const filteredProducts = await ProductModel.find({
+        deleted: false,
+        ...query,
+      });
+
+      return res.status(200).json({
+        message: "Data fetched successfully",
+        totalCount: filteredProducts.length,
+        data: filteredProducts,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+      });
+    }
+  }
+  async filterByColor(req, res) {
+    try {
+      const colorParam = req.query.color;
+
+      const colors = colorParam
+        .split(",")
+        .map((color) => color.trim())
+        .filter((color) => color);
+
+      const query = {
+        color: { $in: colors },
+      };
+
+      const filteredProducts = await ProductModel.find({
+        deleted: false,
+        ...query,
+      });
+      return res.status(200).json({
+        message: "Data fetched successfully",
+        totalCount: filteredProducts.length,
+        data: filteredProducts,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+      });
     }
   }
 }
