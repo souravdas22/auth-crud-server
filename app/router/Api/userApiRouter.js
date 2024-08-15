@@ -10,5 +10,13 @@ userRouter.post(
   userController.register
 );
 userRouter.post("/login", userController.login);
+userRouter.post("/forget-password", userController.forgetPassword);
+userRouter.post("/new-password/:id", userController.newPasswordReset);
+userRouter.get("/confirmation/:email/:token", userController.confirmation);
+userRouter.get(
+  "/fortgotPassword/:email/:token",
+  userController.passwordresetconfirmation
+);
+
 
 module.exports = userRouter;

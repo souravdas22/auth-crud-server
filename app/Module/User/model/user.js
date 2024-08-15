@@ -20,7 +20,10 @@ const userSchema = new mongoose.Schema({
   },
   image: {
     type: String,
-   
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
   },
 });
 const user = mongoose.model("User", userSchema);
