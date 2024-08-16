@@ -2,6 +2,7 @@ const {
   comparePassword,
   mailSend,
   createTransporter,
+  hashPassword,
 } = require("../../middleware/authHelper");
 const crypto = require("crypto");
 const User = require("../User/model/user");
@@ -107,8 +108,8 @@ class UserController {
         user.isVerified = true;
         await user.save();
         return res.status(200).send({
-          status: true,
-          message: "User verified successfully",
+          status: 200,
+          message: "User verified successfully. Now you can login to your account.",
         });
       }
     } catch (error) {
@@ -203,7 +204,7 @@ class UserController {
         to: user.email,
         subject: "Forgot Password",
         html: `
-        <p>Please verify your account and create a new password by clicking the link below:</p>
+        <p>create a new password by clicking the link below:</p>
         <a href="http://localhost:3000/password-reset/${user._id}">
         Reset Password
         </a>
