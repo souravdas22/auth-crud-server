@@ -20,9 +20,17 @@ const productSchema = new Schema(
       type: [String],
       required: [true, "color is required"],
     },
+    brand: {
+      type: String,
+      required: [true, "brand is required"],
+    },
+    description: {
+      type: String,
+      required: [true, "description is required"],
+    },
     image: {
-      type: String
-   },
+      type: String,
+    },
     deleted: {
       type: Boolean,
       default: false,
@@ -30,7 +38,7 @@ const productSchema = new Schema(
   },
   {
     timestamps: true,
-    versionKey:false
+    versionKey: false,
   }
 );
 

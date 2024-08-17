@@ -34,5 +34,6 @@ ProductApiRouter.get(
 );
 ProductApiRouter.get("/product/filter/size", ProductApiController.filterbySize);
 ProductApiRouter.get("/product/filter/color", ProductApiController.filterByColor);
+ProductApiRouter.get("/product/filter/brand", ProductApiController.filterByBrand);
 
 module.exports = ProductApiRouter;

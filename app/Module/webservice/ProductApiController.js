@@ -25,6 +25,8 @@ class ProductController {
         price: req.body.price,
         size: req.body.size,
         color: req.body.color,
+        brand: req.body.brand,
+        description: req.body.description,
       };
       if (req.file) {
         data.image = req.file.path;
@@ -63,8 +65,8 @@ class ProductController {
       if (new_image && duplicateImage.image) {
         fs.unlinkSync(duplicateImage.image);
       }
-      const { name, price, size, color } = req.body;
-      const productData = { name, price, size, color };
+      const { name, price, size, color, brand, description } = req.body;
+      const productData = { name, price, size, color, brand, description };
       if (new_image) {
         productData.image = new_image;
       }
@@ -147,6 +149,28 @@ class ProductController {
         deleted: false,
         ...query,
       });
+      return res.status(200).json({
+        message: "Data fetched successfully",
+        totalCount: filteredProducts.length,
+        data: filteredProducts,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: error.message,
+      });
+    }
+  }
+  async filterByBrand(req, res) {
+    try {
+      const brandParam = req.query.brand;
+
+      const brandArray = brandParam ? brandParam.split(",") : [];
+
+      const filteredProducts = await ProductModel.find({
+        deleted: false,
+        brand: { $in: brandArray },
+      });
+
       return res.status(200).json({
         message: "Data fetched successfully",
         totalCount: filteredProducts.length,
