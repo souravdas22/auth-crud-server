@@ -51,13 +51,11 @@ class UserController {
         from: senderEmail,
         to: user.email,
         subject: "Email Verification ",
-        text:
-          "Hello " +
-          user.name ,
+        text: "Hello " + user.name,
         html: `
         <p>Please verify your account by clicking the link:</p>
-        <a href="${process.env.LOCAL_PORT_URL}/verified/${user.email}/${token_model.token}>
-        Reset Password
+        <a href="${process.env.LOCAL_PORT_URL}/verified/${user.email}/${token_model.token}">
+         Verify Email
         </a>
         <p>Thank you!</p>
          `,
@@ -83,9 +81,34 @@ class UserController {
     try {
       const token = await userRepository.findToken({ token: req.params.token });
       if (!token) {
+        const { email } = req.params;
+        const user = await userModel.findOne({ email });
+        const token_model = new TokenModel({
+          _userId: user._id,
+          token: crypto.randomBytes(16).toString("hex"),
+        });
+        await token_model.save();
+
+        const senderEmail = process.env.MAIL_ID;
+        const senderPassword = process.env.PASSWORD;
+        const transport = createTransporter(senderEmail, senderPassword);
+        const mailOptions = {
+          from: senderEmail,
+          to: email,
+          subject: "Email Verification",
+          html: `
+        <p>This is a new link for for verifying your email which will expire in 10 mins \n\n click the link below to verify:</p>
+        <a href="${process.env.LOCAL_PORT_URL}/verified/${email}/${token_model.token}">
+        Verify Email
+        </a>
+        <p>Thank you!</p>
+         `,
+        };
+        mailSend(req, res, transport, mailOptions);
+
         return res.status(400).send({
           status: 400,
-          message: "Verification link may be expired",
+          message: `verification link may be expired,New verification link sent to ${email}`,
         });
       } else {
         const user = await userRepository.findUser({
@@ -108,7 +131,8 @@ class UserController {
         await user.save();
         return res.status(200).send({
           status: 200,
-          message: "User verified successfully. Now you can login to your account.",
+          message:
+            "User verified successfully. Now you can login to your account.",
         });
       }
     } catch (error) {
@@ -181,7 +205,6 @@ class UserController {
       const { email } = req.body;
       //check user
       const user = await userRepository.findUser({ email });
-    
 
       if (!user) {
         return res.status(404).send({
@@ -189,12 +212,18 @@ class UserController {
           message: "Email is not registered",
         });
       }
-        if (user.isVerified === false) {
-          return res.status(500).send({
-            status: 500,
-            message: "email is not verified",
-          });
-        }
+      if (user.isVerified === false) {
+        return res.status(500).send({
+          status: 500,
+          message: "email is not verified",
+        });
+      }
+      const token_model = new TokenModel({
+        _userId: user._id,
+        token: crypto.randomBytes(16).toString("hex"),
+      });
+      await token_model.save();
+
       const senderEmail = process.env.MAIL_ID;
       const senderPassword = process.env.PASSWORD;
       const transport = createTransporter(senderEmail, senderPassword);
@@ -204,7 +233,7 @@ class UserController {
         subject: "Forgot Password",
         html: `
         <p>create a new password by clicking the link below:</p>
-        <a href="${process.env.LOCAL_PORT_URL}/password-reset/${user._id}>
+         <a href="${process.env.LOCAL_PORT_URL}/password-reset/verification/${user.email}/${token_model.token}">
         Reset Password
         </a>
         <p>Thank you!</p>
@@ -230,10 +259,36 @@ class UserController {
   async passwordresetconfirmation(req, res) {
     try {
       const token = await userRepository.findToken({ token: req.params.token });
+
       if (!token) {
+        const { email } = req.params;
+        const user = await userModel.findOne({ email });
+        const token_model = new TokenModel({
+          _userId: user._id,
+          token: crypto.randomBytes(16).toString("hex"),
+        });
+        await token_model.save();
+
+        const senderEmail = process.env.MAIL_ID;
+        const senderPassword = process.env.PASSWORD;
+        const transport = createTransporter(senderEmail, senderPassword);
+        const mailOptions = {
+          from: senderEmail,
+          to: email,
+          subject: "Forgot Password",
+          html: `
+        <p>This is a new link for creating a new password which will expire in 10 mins \n\n click the link below to create a new password:</p>
+        <a href="${process.env.LOCAL_PORT_URL}/password-reset/verification/${email}/${token_model.token}">
+        Reset Password
+        </a>
+        <p>Thank you!</p>
+         `,
+        };
+        mailSend(req, res, transport, mailOptions);
+
         return res.status(400).send({
           status: 400,
-          message: "reset link may be expired",
+          message: `reset link may be expired,New reset link sent to ${email}`,
         });
       } else {
         const user = await userModel.findOne({
@@ -247,9 +302,10 @@ class UserController {
           });
         }
         if (user.isVerified) {
-          return res.status(400).send({
-            status: 400,
+          return res.status(200).send({
+            status: 200,
             message: "User verified now you can reset password",
+            id: user._id,
           });
         }
       }
@@ -257,7 +313,6 @@ class UserController {
       res.status(500).send({
         status: 500,
         message: "Error in email verification",
-        error: error.message,
       });
     }
   }
@@ -267,7 +322,7 @@ class UserController {
       const id = req.params.id;
       const { newPassword } = req.body;
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-       await userRepository.edit(id, { password: hashedPassword });
+      await userRepository.edit(id, { password: hashedPassword });
       res.status(200).send({
         status: 200,
         message: " password reset successfully",
@@ -283,12 +338,12 @@ class UserController {
   async updatePassword(req, res) {
     try {
       const token = req.params.token;
-       if (!token) {
-         return res.status(403).send({
-           status: "403",
-           message: "a token is required ",
-         });
-       }
+      if (!token) {
+        return res.status(403).send({
+          status: "403",
+          message: "a token is required ",
+        });
+      }
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const { email } = decoded;
       const user = await userRepository.findUser({ email });
@@ -307,7 +362,6 @@ class UserController {
     }
   }
 }
-
 
 const userController = new UserController();
 module.exports = userController;

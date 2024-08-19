@@ -15,7 +15,7 @@ userRouter.post("/new-password/:id", userController.newPasswordReset);
 userRouter.post("/update-password/:token", userController.updatePassword);
 userRouter.get("/confirmation/:email/:token", userController.confirmation);
 userRouter.get(
-  "/fortgotPassword/:email/:token",
+  "/password-reset/:email/:token",
   userController.passwordresetconfirmation
 );
 
