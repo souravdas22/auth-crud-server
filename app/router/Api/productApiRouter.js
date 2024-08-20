@@ -32,8 +32,20 @@ ProductApiRouter.get(
   authCheck,
   ProductApiController.deleteProduct
 );
-ProductApiRouter.get("/product/filter/size", ProductApiController.filterbySize);
-ProductApiRouter.get("/product/filter/color", ProductApiController.filterByColor);
-ProductApiRouter.get("/product/filter/brand", ProductApiController.filterByBrand);
+ProductApiRouter.get(
+  "/product/filter/size",
+  authCheck,
+  ProductApiController.filterbySize
+);
+ProductApiRouter.get(
+  "/product/filter/color",
+  authCheck,
+  ProductApiController.filterByColor
+);
+ProductApiRouter.get(
+  "/product/filter/brand",
+  authCheck,
+  ProductApiController.filterByBrand
+);
 
 module.exports = ProductApiRouter;

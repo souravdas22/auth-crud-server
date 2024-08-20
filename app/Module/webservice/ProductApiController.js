@@ -70,7 +70,7 @@ class ProductController {
       if (new_image) {
         productData.image = new_image;
       }
-
+      console.log(productData,productId)
       const newProduct = await productRepository.edit(productData, productId);
 
       if (!newProduct) {

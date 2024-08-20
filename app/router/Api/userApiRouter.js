@@ -1,23 +1,35 @@
 const express = require("express");
 const userController = require("../../Module/webservice/userApiController");
 const uploadUser = require("../../helper/userImage");
+const { authCheck } = require("../../middleware/authHelper");
 
 const userRouter = express.Router();
 
+//register
 userRouter.post(
   "/register",
   uploadUser.single("image"),
   userController.register
 );
-userRouter.post("/login", userController.login);
-userRouter.post("/forget-password", userController.forgetPassword);
-userRouter.post("/new-password/:id", userController.newPasswordReset);
-userRouter.post("/update-password/:token", userController.updatePassword);
+//register email confirmation
 userRouter.get("/confirmation/:email/:token", userController.confirmation);
+//login
+userRouter.post("/login", userController.login);
+// update password
+userRouter.post("/update-password",authCheck, userController.updatePassword);
+
+
+
+// forget password
+userRouter.post("/forget-password", userController.forgetPassword);
+// password reset confirmation
 userRouter.get(
-  "/password-reset/:email/:token",
+  "/password-reset/confirmation/:email/:token",
   userController.passwordresetconfirmation
 );
+//new password
+userRouter.post("/new-password/:email", userController.newPasswordReset);
+
 
 
 module.exports = userRouter;

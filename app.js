@@ -22,12 +22,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 const ProductApiRouter = require("./app/router/Api/productApiRouter");
 const userApiRouter = require('./app/router/Api/userApiRouter');
-const testRoute = require("./app/router/Api/test");
 
 //api router
 app.use("/api", userApiRouter);
 app.use("/api", ProductApiRouter);
-app.use("/api", testRoute);
 
 const PORT = process.env.PORT || 7000 ;
 

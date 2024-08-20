@@ -41,6 +41,27 @@ class ProductRepositories {
       console.log(error);
     }
   }
+  async resetPassword(email,password) {
+    try {
+      const resetPassword = await UserModel.findOneAndUpdate(
+       email,password,
+        {
+          new: true,
+        }
+      );
+      return resetPassword;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  async deleteToken(id) {
+    try {
+      const deletedToken = await TokenModel.deleteOne(id);
+      return deletedToken;
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }
 
 module.exports = new ProductRepositories();

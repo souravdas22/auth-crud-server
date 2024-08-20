@@ -9,9 +9,7 @@ const User = require("../User/model/user");
 const jwt = require("jsonwebtoken");
 const path = require("path");
 const userRepository = require("../User/Repository/userRepository");
-const nodemailer = require("nodemailer");
 const TokenModel = require("../User/model/tokenModel");
-const userModel = require("../User/model/user");
 const bcrypt = require("bcryptjs");
 
 class UserController {
@@ -82,7 +80,7 @@ class UserController {
       const token = await userRepository.findToken({ token: req.params.token });
       if (!token) {
         const { email } = req.params;
-        const user = await userModel.findOne({ email });
+        const user = await userRepository.findUser({ email });
         const token_model = new TokenModel({
           _userId: user._id,
           token: crypto.randomBytes(16).toString("hex"),
@@ -200,6 +198,36 @@ class UserController {
       });
     }
   }
+
+  //update password
+  async updatePassword(req, res) {
+    try {
+      const token = req.params.token || req.headers["x-access-token"];
+      if (!token) {
+        return res.status(403).send({
+          status: "403",
+          message: "a token is required ",
+        });
+      }
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { email } = decoded;
+      const user = await userRepository.findUser({ email });
+      const { newPassword } = req.body;
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await userRepository.edit(user._id, { password: hashedPassword });
+      res.status(200).send({
+        status: 200,
+        message: " password updated successfully",
+      });
+    } catch (error) {
+      res.status(500).send({
+        status: 500,
+        message: "Error in password reset",
+      });
+    }
+  }
+
+  //reset password
   async forgetPassword(req, res) {
     try {
       const { email } = req.body;
@@ -233,7 +261,7 @@ class UserController {
         subject: "Forgot Password",
         html: `
         <p>create a new password by clicking the link below:</p>
-         <a href="${process.env.LOCAL_PORT_URL}/password-reset/verification/${user.email}/${token_model.token}">
+         <a href="${process.env.LOCAL_PORT_URL}/password-reset/${user.email}/${token_model.token}">
         Reset Password
         </a>
         <p>Thank you!</p>
@@ -246,7 +274,6 @@ class UserController {
       return res.status(200).send({
         status: 200,
         message: "password reset link sent successfully on your email",
-        _id: user._id,
       });
     } catch (error) {
       res.status(500).send({
@@ -256,13 +283,14 @@ class UserController {
       });
     }
   }
+  // reset email confirmation
   async passwordresetconfirmation(req, res) {
     try {
       const token = await userRepository.findToken({ token: req.params.token });
 
       if (!token) {
         const { email } = req.params;
-        const user = await userModel.findOne({ email });
+        const user = await userRepository.findUser({ email });
         const token_model = new TokenModel({
           _userId: user._id,
           token: crypto.randomBytes(16).toString("hex"),
@@ -291,7 +319,7 @@ class UserController {
           message: `reset link may be expired,New reset link sent to ${email}`,
         });
       } else {
-        const user = await userModel.findOne({
+        const user = await userRepository.findUser({
           _id: token._userId,
           email: req.params.email,
         });
@@ -316,43 +344,25 @@ class UserController {
       });
     }
   }
-
+  // new reset password
   async newPasswordReset(req, res) {
     try {
-      const id = req.params.id;
-      const { newPassword } = req.body;
+      const email = req.params.email;
+      const user = await userRepository.findUser({ email });
+      const userId = user._id;
+      const token = await userRepository.findToken({ _userId: userId });
+      if (token) {
+        await userRepository.deleteToken({ _id: token._id });
+      }
+      const newPassword = req.body.newPassword;
       const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await userRepository.edit(id, { password: hashedPassword });
+      await userRepository.resetPassword(
+        { email },
+        { password: hashedPassword }
+      );
       res.status(200).send({
         status: 200,
         message: " password reset successfully",
-      });
-    } catch (error) {
-      res.status(500).send({
-        status: 500,
-        message: "Error in password reset",
-      });
-    }
-  }
-  //update password
-  async updatePassword(req, res) {
-    try {
-      const token = req.params.token;
-      if (!token) {
-        return res.status(403).send({
-          status: "403",
-          message: "a token is required ",
-        });
-      }
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const { email } = decoded;
-      const user = await userRepository.findUser({ email });
-      const { newPassword } = req.body;
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
-      await userRepository.edit(user._id, { password: hashedPassword });
-      res.status(200).send({
-        status: 200,
-        message: " password updated successfully",
       });
     } catch (error) {
       res.status(500).send({
