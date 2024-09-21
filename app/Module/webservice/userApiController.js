@@ -352,7 +352,8 @@ class UserController {
       const userId = user._id;
       const token = await userRepository.findToken({ _userId: userId });
       if (token) {
-        await userRepository.deleteToken({ _id: token._id });
+        await userRepository.deleteToken({ _id: token._id }); // id 
+        // await userModel.findByIdAndDelete(token._id)
       }
       const newPassword = req.body.newPassword;
       const hashedPassword = await bcrypt.hash(newPassword, 10);

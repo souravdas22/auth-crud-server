@@ -14,7 +14,10 @@ class ProductController {
         total: products.length,
       });
     } catch (error) {
-      console.log(error);
+      res.status(500).json({
+        status: 500,
+        error: error.message,
+      });
     }
   }
 
@@ -39,7 +42,10 @@ class ProductController {
         data: newProduct,
       });
     } catch (error) {
-      console.log(error);
+     res.status(500).json({
+       status: 500,
+       error: error.message,
+     });
     }
   }
   async productDetails(req, res) {
@@ -54,7 +60,10 @@ class ProductController {
         data: singleProduct,
       });
     } catch (error) {
-      console.log(error);
+      res.status(500).json({
+        status: 500,
+        error: error.message,
+      });
     }
   }
   async updateProduct(req, res) {
@@ -70,7 +79,6 @@ class ProductController {
       if (new_image) {
         productData.image = new_image;
       }
-      console.log(productData,productId)
       const newProduct = await productRepository.edit(productData, productId);
 
       if (!newProduct) {
@@ -83,7 +91,10 @@ class ProductController {
         data: newProduct,
       });
     } catch (error) {
-      console.log(error);
+      res.status(500).json({
+        status: 500,
+        error: error.message,
+      });
     }
   }
 
@@ -99,7 +110,10 @@ class ProductController {
         message: "Product deleted successfully",
       });
     } catch (error) {
-      console.log(error);
+      res.status(500).json({
+        status: 500,
+        error: error.message,
+      });
     }
   }
   //filter by size
@@ -180,6 +194,36 @@ class ProductController {
       return res.status(500).json({
         message: error.message,
       });
+    }
+  }
+  async searchProduct(req, res) {
+    try {
+      const query = {};
+       if (req.query.name) {
+         query.name = { $regex: req.query.name, $options: "i" };
+       }
+       if (req.query.price) {
+         query.price = parseFloat(req.query.price); 
+       }
+       if (req.query.size) {
+         query.size = { $in: req.query.size.split(",") }; 
+       }
+       if (req.query.color) {
+         query.color = { $in: req.query.color.split(",") };
+       }
+       if (req.query.brand) {
+         query.brand = { $regex: req.query.brand, $options: "i" };
+       }
+        const result = await ProductModel.find({ ...query, deleted: false });
+         if (!result || result.length === 0) {
+           console.log("No products found");
+           return res.status(404).send({ message: "No products found" });
+         }
+         res.status(200).json(result);
+       
+    } catch (error) {
+       console.log("Not a Valid Search", error);
+       res.status(500).send({ error: "Not a Valid Search" });
     }
   }
 }

@@ -48,4 +48,6 @@ ProductApiRouter.get(
   ProductApiController.filterByBrand
 );
 
+ProductApiRouter.get("/products/search", authCheck, ProductApiController.searchProduct);
+
 module.exports = ProductApiRouter;
